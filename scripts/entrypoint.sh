@@ -179,6 +179,33 @@ if [ ! -f "$INITALIZED" ]; then
 </service-group>' >> /etc/avahi/services/samba.service
   fi
 
+################################
+# START USER SHARES
+################################
+
+if [ ! -z ${SAMBA_USERSHARES_DIR} ] && [ -d ${SAMBA_USERSHARES_DIR} ]; then
+	echo ">> USERSHARES: Enabled "
+	# create usershares directory
+	mkdir /var/lib/samba/usershares/
+	# set permissions for usershare directory
+	chmod 1770 /var/lib/samba/usershares
+	# check includes directory every minute
+	echo "   usershare path = /var/lib/samba/usershares" >> /etc/samba/smb.conf
+	echo "   usershare max shares = 100" >> /etc/samba/smb.conf
+  	echo "   usershare allow guests = yes" >> /etc/samba/smb.conf
+  	echo "   usershare owner only = no" >> /etc/samba/smb.conf
+  	echo " " >> /etc/samba/smb.conf
+	# create crontab
+	echo ">> USERSHARES: Create crontab"
+	echo "* * * * * /container/scripts/check-usershares.sh $SAMBA_USERSHARES_DIR" >> /etc/crontabs/root
+fi
+
+################################
+# END USER SHARES
+################################
+
+
+
   ##
   # Samba Volume Config ENVs
   ##
