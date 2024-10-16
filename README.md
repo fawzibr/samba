@@ -39,7 +39,7 @@ _all of those variants are automatically build and generated in one go_
 * 2024-10-16
     * made public
 
-## Environment variables and defaults
+## Environment variable added 
 
 ### Samba
 
