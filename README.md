@@ -47,9 +47,9 @@ _all of those variants are automatically build and generated in one go_
     * _optional_
     * default not set
     * location for all usershare files 
-    * files must be named 'sharename.usershare' format of the file is:
-        path=
-        comment=
-        acl=
-        guest_ok=
+    * files must be named 'sharename.usershare' format of the file is:\n
+        path=\n
+        comment=\n
+        acl=\n
+        guest_ok=\n
     * for values look at the samba 'net usershare add' command (https://www.samba.org/~ab/output/htmldocs/manpages-3/net.8.html)
