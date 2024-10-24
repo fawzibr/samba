@@ -46,7 +46,7 @@ for FILE_NAME in $USERSHARE_FILES; do
 	NET_ARGS=""
 	if [ "$PREV_MD5" != "" ] && [ "$CURR_MD5" = "" ]; then # delete
 		echo ">> USERSHARE: Delete [$SHARE_NAME]"
-		NET_ARGS="delete $SHARE_NAME"
+		NET_ARGS="delete \"$SHARE_NAME\""
 	elif [ "$PREV_MD5" != "$CURR_MD5" ]; then # added or modified
 		echo ">> USERSHARE: Add/Modify [$SHARE_NAME]"
 		# get variables from usershare file
@@ -58,13 +58,13 @@ for FILE_NAME in $USERSHARE_FILES; do
 		if [ -z "$SHARE_PATH" ]; then
 			echo "  ERROR: Path variable not set in $FILE_NAME"
 		elif [ -z "$SHARE_ACL" ] && [ -z "$SHARE_GUEST" ] ; then # acl/guest not set
-			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share}"
+			NET_ARGS="add \"$SHARE_NAME\" \"$SHARE_PATH\" \"${SHARE_COMMENT:-$SHARE_NAME share}\""
 		elif [ ! -z "$SHARE_ACL" ] && [ -z "$SHARE_GUEST" ] ; then # acl set, guest not set
-			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share} $SHARE_ACL"
+			NET_ARGS="add \"$SHARE_NAME\" \"$SHARE_PATH\" \"${SHARE_COMMENT:-$SHARE_NAME share}\" \"$SHARE_ACL\""
 		elif [ -z "$SHARE_ACL" ] && [ ! -z "$SHARE_GUEST" ] ; then # acl not set, guest set
-			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share} Everyone:R guest_ok=$SHARE_GUEST"
+			NET_ARGS="add \"$SHARE_NAME\" \"$SHARE_PATH\" \"${SHARE_COMMENT:-$SHARE_NAME share}\" \"Everyone:R\" \"guest_ok=$SHARE_GUEST\""
 		else # acl/guest set
-			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share} $SHARE_ACL guest_ok=$SHARE_GUEST"
+			NET_ARGS="add \"$SHARE_NAME\" \"$SHARE_PATH\" \"${SHARE_COMMENT:-$SHARE_NAME share}\" \"$SHARE_ACL\" \"guest_ok=$SHARE_GUEST\""
 		fi
 		# execute command
 		if [ ! -z "$NET_ARGS" ]; then

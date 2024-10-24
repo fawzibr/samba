@@ -131,7 +131,7 @@ if [ ! -f "$INITALIZED" ]; then
       echo -e "$ACCOUNT_PASSWORD\n$ACCOUNT_PASSWORD" | passwd "$ACCOUNT_NAME"
       echo -e "$ACCOUNT_PASSWORD\n$ACCOUNT_PASSWORD" | smbpasswd "$ACCOUNT_NAME"
     fi
-    
+
     smbpasswd -e "$ACCOUNT_NAME"
   done
 
@@ -205,8 +205,9 @@ if [ ! -z ${SAMBA_USERSHARES_DIR} ] && [ -d ${SAMBA_USERSHARES_DIR} ]; then
 		# write template entries
 		echo ">> USERSHARES: Template conntent"
 		echo "$SAMBA_USERSHARES_TEMPLATE" | sed 's/;/\n/g' | while IFS= read -r LINE ; do
+			LINE=$(echo $LINE | xargs)
 			echo "  $LINE"
-		        echo $LINE >> /etc/samba/smb.conf;
+		        echo " $LINE" >> /etc/samba/smb.conf;
 		done
 	fi
 	# create crontab
