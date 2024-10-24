@@ -43,27 +43,37 @@ for FILE_NAME in $USERSHARE_FILES; do
 	PREV_MD5=$(cat $CHECKSUM_PREV | grep "$FILE_NAME" | cut -f 1 -d " ")
 	CURR_MD5=$(cat $CHECKSUM_CURR | grep "$FILE_NAME" | cut -f 1 -d " ")
 	# process usershare
+	NET_ARGS=""
 	if [ "$PREV_MD5" != "" ] && [ "$CURR_MD5" = "" ]; then # delete
 		echo ">> USERSHARE: Delete [$SHARE_NAME]"
-		net usershare delete "$SHARE_NAME"
+		NET_ARGS="delete $SHARE_NAME"
 	elif [ "$PREV_MD5" != "$CURR_MD5" ]; then # added or modified
-		echo ">> USERSHARE: Modify [$SHARE_NAME]"
+		echo ">> USERSHARE: Add/Modify [$SHARE_NAME]"
 		# get variables from usershare file
 		SHARE_PATH=$(cat $FILE_NAME | grep -i "path\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
 		SHARE_COMMENT=$(cat $FILE_NAME | grep -i "comment\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
 		SHARE_ACL=$(cat $FILE_NAME | grep -i "acl\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
 		SHARE_GUEST=$(cat $FILE_NAME | grep -i "guest_ok\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
-		# add usershare
+		# create args
 		if [ -z "$SHARE_PATH" ]; then
 			echo "  ERROR: Path variable not set in $FILE_NAME"
 		elif [ -z "$SHARE_ACL" ] && [ -z "$SHARE_GUEST" ] ; then # acl/guest not set
-			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}"
+			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share}"
 		elif [ ! -z "$SHARE_ACL" ] && [ -z "$SHARE_GUEST" ] ; then # acl set, guest not set
-			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "$SHARE_ACL"
+			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share} $SHARE_ACL"
 		elif [ -z "$SHARE_ACL" ] && [ ! -z "$SHARE_GUEST" ] ; then # acl not set, guest set
-			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "Everyone:R" "guest_ok=$SHARE_GUEST"
+			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share} Everyone:R guest_ok=$SHARE_GUEST"
 		else # acl/guest set
-			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "$SHARE_ACL" "guest_ok=$SHARE_GUEST"
+			NET_ARGS="add $SHARE_NAME $SHARE_PATH ${SHARE_COMMENT:-$SHARE_NAME share} $SHARE_ACL guest_ok=$SHARE_GUEST"
+		fi
+		# execute command
+		if [ ! -z "$NET_ARGS" ]; then
+			echo ">> USERSHARE: net usershare $NET_ARGS"
+			if ! net usershare $NET_ARGS; then
+				echo "  ERROR"
+			else
+				echo "  SUCCESS"
+			fi
 		fi
 	fi
 done

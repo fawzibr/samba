@@ -201,7 +201,7 @@ if [ ! -z ${SAMBA_USERSHARES_DIR} ] && [ -d ${SAMBA_USERSHARES_DIR} ]; then
 		echo ">> USERSHARES: Usershare template enabled"
 	  	echo "   usershare template share = usershare_template" >> /etc/samba/smb.conf
 	  	echo "[usershare_template]" >> /etc/samba/smb.conf
-	  	echo "-valid=no" >> /etc/samba/smb.conf
+	  	echo " -valid=no" >> /etc/samba/smb.conf
 		# write template entries
 		echo ">> USERSHARES: Template conntent"
 		echo "$SAMBA_USERSHARES_TEMPLATE" | sed 's/;/\n/g' | while IFS= read -r LINE ; do
