@@ -194,10 +194,26 @@ if [ ! -z ${SAMBA_USERSHARES_DIR} ] && [ -d ${SAMBA_USERSHARES_DIR} ]; then
 	echo "   usershare max shares = 100" >> /etc/samba/smb.conf
   	echo "   usershare allow guests = yes" >> /etc/samba/smb.conf
   	echo "   usershare owner only = no" >> /etc/samba/smb.conf
-  	echo " " >> /etc/samba/smb.conf
+	# create usershare template
+	if [ -z "$SAMBA_USERSHARES_TEMPLATE" ]; then
+		echo ">> USERSHARES: No template set"
+	else
+		echo ">> USERSHARES: Usershare template enabled"
+	  	echo "   usershare template share = usershare_template" >> /etc/samba/smb.conf
+	  	echo "[usershare_template]" >> /etc/samba/smb.conf
+	  	echo "-valid=no" >> /etc/samba/smb.conf
+		# write template entries
+		echo ">> USERSHARES: Template conntent"
+		echo "$SAMBA_USERSHARES_TEMPLATE" | sed 's/;/\n/g' | while IFS= read -r LINE ; do
+			echo "  $LINE"
+		        echo $LINE >> /etc/samba/smb.conf;
+		done
+	fi
 	# create crontab
 	echo ">> USERSHARES: Create crontab"
 	echo "* * * * * /container/scripts/check-usershares.sh $SAMBA_USERSHARES_DIR" >> /etc/crontabs/root
+else
+	echo ">> USERSHARES: No directory set"
 fi
 
 ################################

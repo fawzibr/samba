@@ -55,11 +55,15 @@ for FILE_NAME in $USERSHARE_FILES; do
 		SHARE_GUEST=$(cat $FILE_NAME | grep -i "guest_ok\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
 		# add usershare
 		if [ -z "$SHARE_PATH" ]; then
-			echo "  ERROR: Path variavble not set in $FILE_NAME"
-		elif [ -z "$SHARE_GUEST" ]; then 
-			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "${SHARE_ACL:-Everyone:R}"
-		else
-			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "${SHARE_ACL:-Everyone:R}" "guest_ok=$SHARE_GUEST"
+			echo "  ERROR: Path variable not set in $FILE_NAME"
+		elif [ -z "$SHARE_ACL" ] && [ -z "$SHARE_GUEST" ] ; then # acl/guest not set
+			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}"
+		elif [ ! -z "$SHARE_ACL" ] && [ -z "$SHARE_GUEST" ] ; then # acl set, guest not set
+			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "$SHARE_ACL"
+		elif [ -z "$SHARE_ACL" ] && [ ! -z "$SHARE_GUEST" ] ; then # acl not set, guest set
+			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "Everyone:R" "guest_ok=$SHARE_GUEST"
+		else # acl/guest set
+			net usershare add "$SHARE_NAME" "$SHARE_PATH" "${SHARE_COMMENT:-$SHARE_NAME share}" "$SHARE_ACL" "guest_ok=$SHARE_GUEST"
 		fi
 	fi
 done

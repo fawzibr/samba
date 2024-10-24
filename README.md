@@ -51,7 +51,13 @@ _all of those variants are automatically build and generated in one go_
     ```
         path=<volume/dir to share>
         comment=<optional, will default to 'sharename'>
-        acl=<optional, default is 'Everyone:R'>
-        guest_ok=<optional, default 'n'>
+	acl=<optional>
+	guest_ok=y|n,<optional>
     ```
-    * for values look at the samba 'net usershare add' command (https://www.samba.org/~ab/output/htmldocs/manpages-3/net.8.html)
+    * for acl values look at 'net usershare add' command (https://www.samba.org/~ab/output/htmldocs/manpages-3/net.8.html)
+
+*  __SAMBA\_USERSHARES\_TEMPLATE__
+    * _optional_
+    * default not set
+    * must be share parameters separated by colon or new line 
+    * for share parameters look at smb.conf (https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html)
