@@ -36,6 +36,8 @@ _all of those variants are automatically build and generated in one go_
 
 ## Changelogs
 
+* 2024-10-27
+    * skipped using usershares, now just creating normal shares and reloading the config file
 * 2024-10-16
     * made public
 
@@ -47,17 +49,4 @@ _all of those variants are automatically build and generated in one go_
     * _optional_
     * default not set
     * location for all usershare files 
-    * files must be named 'sharename.usershare' format of the file is:
-    ```
-        path=<volume/dir to share>
-        comment=<optional, will default to 'sharename'>
-	acl=<optional>
-	guest_ok=y|n,<optional>
-    ```
-    * for acl values look at 'net usershare add' command (https://www.samba.org/~ab/output/htmldocs/manpages-3/net.8.html)
-
-*  __SAMBA\_USERSHARES\_TEMPLATE__
-    * _optional_
-    * default not set
-    * must be share parameters separated by colon or new line 
-    * for share parameters look at smb.conf (https://www.samba.org/samba/docs/current/man-html/smb.conf.5.html)
+    * files must be named 'sharename.share', contents are the values of a normal samba share. See the samba documentation

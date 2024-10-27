@@ -22,6 +22,17 @@ RUN apk add --no-cache runit \
  && touch /external/avahi/not-mounted \
  && echo done
 
+# install crudini
+
+RUN apk update
+RUN apk upgrade
+RUN apk add python3
+RUN apk add py3-pip
+RUN pip3 install --break-system-packages iniparse
+RUN pip3 install --break-system-packages crudini
+
+#
+
 VOLUME ["/shares"]
 
 EXPOSE 137/udp 139 445

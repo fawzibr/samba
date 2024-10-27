@@ -46,33 +46,33 @@ if [ ! -f "$INITALIZED" ]; then
     SAMBA_CONF_LOG_LEVEL="1"
     echo ">> SAMBA CONFIG: no \$SAMBA_CONF_LOG_LEVEL set, using '$SAMBA_CONF_LOG_LEVEL'"
   fi
-  echo '   log level = '"$SAMBA_CONF_LOG_LEVEL" >> /etc/samba/smb.conf
+  echo 'log level = '"$SAMBA_CONF_LOG_LEVEL" >> /etc/samba/smb.conf
 
   if [ -z ${SAMBA_CONF_WORKGROUP+x} ]
   then
     SAMBA_CONF_WORKGROUP="WORKGROUP"
     echo ">> SAMBA CONFIG: no \$SAMBA_CONF_WORKGROUP set, using '$SAMBA_CONF_WORKGROUP'"
   fi
-  echo '   workgroup = '"$SAMBA_CONF_WORKGROUP" >> /etc/samba/smb.conf
+  echo 'workgroup = '"$SAMBA_CONF_WORKGROUP" >> /etc/samba/smb.conf
 
   if [ -z ${SAMBA_CONF_SERVER_STRING+x} ]
   then
     SAMBA_CONF_SERVER_STRING="Samba Server"
     echo ">> SAMBA CONFIG: no \$SAMBA_CONF_SERVER_STRING set, using '$SAMBA_CONF_SERVER_STRING'"
   fi
-  echo '   server string = '"$SAMBA_CONF_SERVER_STRING" >> /etc/samba/smb.conf
+  echo 'server string = '"$SAMBA_CONF_SERVER_STRING" >> /etc/samba/smb.conf
 
   if [ -z ${SAMBA_CONF_MAP_TO_GUEST+x} ]
   then
     SAMBA_CONF_MAP_TO_GUEST="Bad User"
     echo ">> SAMBA CONFIG: no \$SAMBA_CONF_MAP_TO_GUEST set, using '$SAMBA_CONF_MAP_TO_GUEST'"
   fi
-  echo '   map to guest = '"$SAMBA_CONF_MAP_TO_GUEST" >> /etc/samba/smb.conf
+  echo 'map to guest = '"$SAMBA_CONF_MAP_TO_GUEST" >> /etc/samba/smb.conf
 
   if [ ! -z ${NETBIOS_DISABLE+x} ]
   then
     echo ">> SAMBA CONFIG: \$NETBIOS_DISABLE is set - disabling nmbd"
-    echo '   disable netbios = yes' >> /etc/samba/smb.conf
+    echo 'disable netbios = yes' >> /etc/samba/smb.conf
   fi
 
   ##
@@ -85,7 +85,7 @@ if [ ! -f "$INITALIZED" ]; then
     CONF_KEY_VALUE=$(echo "$I_CONF" | sed 's/^SAMBA_GLOBAL_CONFIG_//g' | sed 's/=.*//g' | sed 's/_SPACE_/ /g' | sed 's/_COLON_/:/g')
     CONF_CONF_VALUE=$(echo "$I_CONF" | sed 's/^[^=]*=//g')
     echo ">> global config - adding: '$CONF_KEY_VALUE' = '$CONF_CONF_VALUE' to /etc/samba/smb.conf"
-    echo '   '"$CONF_KEY_VALUE"' = '"$CONF_CONF_VALUE"  >> /etc/samba/smb.conf
+    echo ''"$CONF_KEY_VALUE"' = '"$CONF_CONF_VALUE"  >> /etc/samba/smb.conf
   done
 
   # FAIL FAST START
@@ -189,27 +189,6 @@ if [ ! -z ${SAMBA_USERSHARES_DIR} ] && [ -d ${SAMBA_USERSHARES_DIR} ]; then
 	mkdir /var/lib/samba/usershares/
 	# set permissions for usershare directory
 	chmod 1770 /var/lib/samba/usershares
-	# check includes directory every minute
-	echo "   usershare path = /var/lib/samba/usershares" >> /etc/samba/smb.conf
-	echo "   usershare max shares = 100" >> /etc/samba/smb.conf
-  	echo "   usershare allow guests = yes" >> /etc/samba/smb.conf
-  	echo "   usershare owner only = no" >> /etc/samba/smb.conf
-	# create usershare template
-	if [ -z "$SAMBA_USERSHARES_TEMPLATE" ]; then
-		echo ">> USERSHARES: No template set"
-	else
-		echo ">> USERSHARES: Usershare template enabled"
-	  	echo "   usershare template share = usershare_template" >> /etc/samba/smb.conf
-	  	echo "[usershare_template]" >> /etc/samba/smb.conf
-	  	echo " -valid=no" >> /etc/samba/smb.conf
-		# write template entries
-		echo ">> USERSHARES: Template conntent"
-		echo "$SAMBA_USERSHARES_TEMPLATE" | sed 's/;/\n/g' | while IFS= read -r LINE ; do
-			LINE=$(echo $LINE | xargs)
-			echo "  $LINE"
-		        echo " $LINE" >> /etc/samba/smb.conf;
-		done
-	fi
 	# create crontab
 	echo ">> USERSHARES: Create crontab"
 	echo "* * * * * /container/scripts/check-usershares.sh $SAMBA_USERSHARES_DIR" >> /etc/crontabs/root
@@ -220,8 +199,6 @@ fi
 ################################
 # END USER SHARES
 ################################
-
-
 
   ##
   # Samba Volume Config ENVs
@@ -280,13 +257,13 @@ fi
     if echo "$CONF_CONF_VALUE" | sed 's/;/\n/g' | grep 'fruit:time machine' | grep yes 2>/dev/null >/dev/null;
     then
         echo "  >> TIMEMACHINE: adding samba timemachine specifics to volume config: $VOL_NAME ($VOL_PATH)"
-        echo ' fruit:metadata = stream
- durable handles = yes
- kernel oplocks = no
- kernel share modes = no
- posix locking = no
- ea support = yes
- inherit acls = yes
+        echo 'fruit:metadata = stream
+durable handles = yes
+kernel oplocks = no
+kernel share modes = no
+posix locking = no
+ea support = yes
+inherit acls = yes
 ' >> /etc/samba/smb.conf
     fi
 
@@ -294,7 +271,7 @@ fi
     then
       VOL_PATH_BASE=$(echo "$VOL_PATH" | sed 's,/%U$,,g')
       echo "  >> multiuser volume - $VOL_PATH"
-      echo ' root preexec = /container/scripts/samba_create_user_dir.sh '"$VOL_PATH_BASE"' %U' >> /etc/samba/smb.conf
+      echo 'root preexec = /container/scripts/samba_create_user_dir.sh '"$VOL_PATH_BASE"' %U' >> /etc/samba/smb.conf
     fi
 
     echo "" >> /etc/samba/smb.conf

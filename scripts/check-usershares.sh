@@ -4,60 +4,46 @@
 # FUNCTIONS
 ####################################
 
-add_share(){
+add_include_share(){
 	SN=$1 # SHARE NAME
-	SD=$2 # SHARE DIR
-	SC=$3 # SHARE COMMENT
-	SP=$4 # SHARE PERMISSIONS
-	SG=$5 # SHARE GUEST OK
+	SF=$2 # SHARE FILE
+
 	# validate arguments
+
 	if [ -z "$SN" ]; then
 		echo "  ERROR: Share name is empty"
 		return 1
-	elif [ -z "$SD" ]; then
-		echo "  ERROR: Path variable is empty"
-		return 1
-	elif [ ! -d "$SD" ]; then
-		echo "  ERROR: Path is missing or not a directory"
+	elif [ "$SN" = "global" ] ||  [ "$SN" = "homes" ] ||  [ "$SN" = "printers" ]; then
+		echo "  ERROR: Share name [$SN] is not allowed"
 		return 1
 	fi
-	# config permissions and guest
-	if [ -z "$SP" ] && [ -z "$SG" ] ; then # not set
-		NET_OPTS=""
-	elif [ ! -z "$SP" ] && [ -z "$SG" ] ; then # acl set, guest not set
-		NET_OPTS="$SP"
-	elif [ -z "$SP" ] && [ ! -z "$SG" ] ; then # acl not set, guest set
-		NET_OPTS="Everyone:R guest_ok=$SG"
-	else # acl/guest set
-		NET_OPTS="$SP guest_ok=$SG"
-	fi
-	# start share
+
+	# delete existing section
+
+	echo ">> USERSHARE: Delete [$SN]"
+	crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
+
+	# copy keys in file to smb.conf
 	echo ">> USERSHARE: Add/Modify [$SN]"
-	echo ">> USERSHARE: net usershare add \"$SN\" \"$SD\" \"${SC:-$SC share}\" $NET_OPTS"
-	if net usershare add "$SN" "$SD" "${SC:-$SC share}" $NET_OPTS; then
-		echo "     SUCCESS"
-                net usershare info --long "$SN" | while IFS= read -r LINE ; do
-  			echo "     $LINE"
-                done
-		return 0
-	else
-		echo "     ERROR"
-		return 1
-	fi
+	crudini --get --ini-options=ignoreindent "$SF" "" | while IFS= read -r KEY ; do
+		VALUE=$(crudini --get "$SF" "" "$KEY")
+		echo "     $KEY=$VALUE"
+		crudini --set --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN" "$KEY" "$VALUE"
+        done
+
+	# reload config
+	echo ">> USERSHARE: Reload config"
+	smbcontrol all reload-config
 }
 
-delete_share(){
+delete_include_share(){
 	SN="$1"
-	#
-	echo ">> USERSHARE: Add/Modify [$SN]"
-	echo ">> USERSHARE: net usershare delete \"$SN\""
-	if net usershare delete "$SN"; then 
-		echo "  SUCCESS"
-		return 0
-	else
-		echo "  ERROR"
-		return 1
-	fi
+	# delete from include file
+	echo ">> USERSHARE: Delete [$SN]"
+	crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
+	# reload config
+	echo ">> USERSHARE: Reload config"
+	smbcontrol all reload-config
 }
 
 ####################################
@@ -79,7 +65,7 @@ fi
 
 # create new checksum
 
-md5sum $USERSHARE_DIR/*.usershare 2> /dev/null > $CHECKSUM_CURR
+md5sum $USERSHARE_DIR/*.share 2> /dev/null > $CHECKSUM_CURR
 
 # get all files in checksum.curr
 
@@ -110,7 +96,8 @@ for FILE_NAME in $USERSHARE_FILES; do
 	RESULT=""
 	if [ "$PREV_MD5" != "" ] && [ "$CURR_MD5" = "" ]; then # share file deleted
 		# delete the share from samba
-		delete_share "$SHARE_NAME"
+		# delete_net_share "$SHARE_NAME"
+		delete_include_share "$SHARE_NAME"
 	elif [ "$PREV_MD5" != "$CURR_MD5" ]; then # share file added or changed
 		# get variables from usershare file
 		SHARE_PATH=$(cat $FILE_NAME | grep -i "path\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
@@ -118,6 +105,7 @@ for FILE_NAME in $USERSHARE_FILES; do
 		SHARE_ACL=$(cat $FILE_NAME | grep -i "acl\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
 		SHARE_GUEST=$(cat $FILE_NAME | grep -i "guest_ok\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
 		# add share to samba
-		add_share "$SHARE_NAME" "$SHARE_PATH" "$SHARE_COMMENT" "$SHARE_ACL" "$SHARE_GUEST"
+		# add_net_share "$SHARE_NAME" "$SHARE_PATH" "$SHARE_COMMENT" "$SHARE_ACL" "$SHARE_GUEST"
+		add_include_share "$SHARE_NAME" "$FILE_NAME"
 	fi
 done
