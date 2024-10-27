@@ -267,7 +267,7 @@ inherit acls = yes
 ' >> /etc/samba/smb.conf
     fi
 
-    if echo "$VOL_PATH" | grep '%U$' 2>/dev/null >/dev/null; 
+    if echo "$VOL_PATH" | grep '%U$' 2>/dev/null >/dev/null;
     then
       VOL_PATH_BASE=$(echo "$VOL_PATH" | sed 's,/%U$,,g')
       echo "  >> multiuser volume - $VOL_PATH"
@@ -304,7 +304,7 @@ inherit acls = yes
     echo ">> EXTERNAL AVAHI: list of services"
     ls -l /external/avahi/*.service
   fi
-  
+
   echo ""
   echo ">> SAMBA: check smb.conf file using 'testparm -s'"
   echo "############################### START ####################################"
@@ -323,6 +323,17 @@ inherit acls = yes
 else
   echo ">> CONTAINER: already initialized - direct start of samba"
 fi
+
+################################
+# START - SAVE SECTIONS
+################################
+
+crudini --get --ini-options=ignoreindent /etc/samba/smb.conf > /tmp/sections.tmp
+
+################################
+# END - SAVE SECTIONS
+################################
+
 
 ##
 # CMD

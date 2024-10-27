@@ -7,43 +7,54 @@
 add_include_share(){
 	SN=$1 # SHARE NAME
 	SF=$2 # SHARE FILE
-
-	# validate arguments
-
+	#
+	echo ">> USERSHARE: Add/Modify [$SN]"
 	if [ -z "$SN" ]; then
 		echo "  ERROR: Share name is empty"
 		return 1
-	elif [ "$SN" = "global" ] ||  [ "$SN" = "homes" ] ||  [ "$SN" = "printers" ]; then
-		echo "  ERROR: Share name [$SN] is not allowed"
+	elif echo "$SN" | grep -E "homes|global|printers" > /dev/null; then
+		echo "  ERROR: Share name [$SN] is not allowed, it is a special samba section"
 		return 1
+	elif cat /tmp/sections.tmp | grep -E "$SN" > /dev/null; then
+		echo "  ERROR: Share name [$SN] is not allowed, it is a existing share"
+		return 1
+	else
+		# delete existing share
+		crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
+		# copy keys in file to smb.conf
+		crudini --get --ini-options=ignoreindent "$SF" "" | while IFS= read -r KEY ; do
+			VALUE=$(crudini --get "$SF" "" "$KEY")
+			echo "     $KEY=$VALUE"
+			crudini --set --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN" "$KEY" "$VALUE"
+	        done
+		# reload config
+		echo ">> USERSHARE: Reload config"
+		smbcontrol all reload-config
+		return 0
 	fi
-
-	# delete existing section
-
-	echo ">> USERSHARE: Delete [$SN]"
-	crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
-
-	# copy keys in file to smb.conf
-	echo ">> USERSHARE: Add/Modify [$SN]"
-	crudini --get --ini-options=ignoreindent "$SF" "" | while IFS= read -r KEY ; do
-		VALUE=$(crudini --get "$SF" "" "$KEY")
-		echo "     $KEY=$VALUE"
-		crudini --set --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN" "$KEY" "$VALUE"
-        done
-
-	# reload config
-	echo ">> USERSHARE: Reload config"
-	smbcontrol all reload-config
 }
 
 delete_include_share(){
 	SN="$1"
-	# delete from include file
+	#
 	echo ">> USERSHARE: Delete [$SN]"
-	crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
-	# reload config
-	echo ">> USERSHARE: Reload config"
-	smbcontrol all reload-config
+	if [ -z "$SN" ]; then
+		echo "  ERROR: Share name is empty"
+		return 1
+	elif echo "$SN" | grep -E "homes|global|printers" > /dev/null; then
+		echo "  ERROR: Share name [$SN] is not allowed, it is a special samba section"
+		return 1
+	elif cat /tmp/sections.tmp | grep -E "$SN" > /dev/null; then
+		echo "  ERROR: Share name [$SN] is not allowed, it is a existing share"
+		return 1
+	else
+		# delete from smb.conf
+		crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
+		# reload config
+		echo ">> USERSHARE: Reload config"
+		smbcontrol all reload-config
+		return 0
+	fi
 }
 
 ####################################
