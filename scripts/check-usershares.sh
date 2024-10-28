@@ -8,7 +8,7 @@ add_include_share(){
 	SN=$1 # SHARE NAME
 	SF=$2 # SHARE FILE
 	#
-	echo ">> USERSHARE: Add/Modify [$SN]"
+	echo ">> DYNAMIC SHARES: Add/Modify [$SN]"
 	if [ -z "$SN" ]; then
 		echo "  ERROR: Share name is empty"
 		return 1
@@ -28,7 +28,7 @@ add_include_share(){
 			crudini --set --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN" "$KEY" "$VALUE"
 	        done
 		# reload config
-		echo ">> USERSHARE: Reload config"
+		echo ">> DYNAMIC SHARES: Reload config"
 		smbcontrol all reload-config
 		return 0
 	fi
@@ -37,7 +37,7 @@ add_include_share(){
 delete_include_share(){
 	SN="$1"
 	#
-	echo ">> USERSHARE: Delete [$SN]"
+	echo ">> DYNAMIC SHARES: Delete [$SN]"
 	if [ -z "$SN" ]; then
 		echo "  ERROR: Share name is empty"
 		return 1
@@ -51,7 +51,7 @@ delete_include_share(){
 		# delete from smb.conf
 		crudini --del --ini-options=ignoreindent "/etc/samba/smb.conf" "$SN"
 		# reload config
-		echo ">> USERSHARE: Reload config"
+		echo ">> DYNAMIC SHARE: Reload config"
 		smbcontrol all reload-config
 		return 0
 	fi
@@ -103,20 +103,11 @@ for FILE_NAME in $USERSHARE_FILES; do
 	# get MD5
 	PREV_MD5=$(cat $CHECKSUM_PREV | grep "$FILE_NAME" | cut -f 1 -d " ")
 	CURR_MD5=$(cat $CHECKSUM_CURR | grep "$FILE_NAME" | cut -f 1 -d " ")
-	# process usershare
+	# process dynamic share
 	RESULT=""
 	if [ "$PREV_MD5" != "" ] && [ "$CURR_MD5" = "" ]; then # share file deleted
-		# delete the share from samba
-		# delete_net_share "$SHARE_NAME"
 		delete_include_share "$SHARE_NAME"
-	elif [ "$PREV_MD5" != "$CURR_MD5" ]; then # share file added or changed
-		# get variables from usershare file
-		SHARE_PATH=$(cat $FILE_NAME | grep -i "path\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
-		SHARE_COMMENT=$(cat $FILE_NAME | grep -i "comment\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
-		SHARE_ACL=$(cat $FILE_NAME | grep -i "acl\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
-		SHARE_GUEST=$(cat $FILE_NAME | grep -i "guest_ok\s*=" $FILE_NAME | cut -f 2 -d "="  | xargs)
-		# add share to samba
-		# add_net_share "$SHARE_NAME" "$SHARE_PATH" "$SHARE_COMMENT" "$SHARE_ACL" "$SHARE_GUEST"
+	elif [ "$PREV_MD5" != "$CURR_MD5" ]; then # share file added or modified
 		add_include_share "$SHARE_NAME" "$FILE_NAME"
 	fi
 done

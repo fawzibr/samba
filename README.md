@@ -2,7 +2,7 @@
 
 samba on alpine
 
-with timemachine, zeroconf (`avahi`), WSD (Web Services for Devices) (`wsdd2`) and added usershare support.
+with timemachine, zeroconf (`avahi`), WSD (Web Services for Devices) (`wsdd2`) and added dynamic share support.
 
 This fork is based on https://github.com/ServerContainers/samba, look for main documentation there.
 
@@ -36,6 +36,8 @@ _all of those variants are automatically build and generated in one go_
 
 ## Changelogs
 
+* 2024-10-28
+    * changed variable name so it's not mistaken as creating user shares, just a regular share
 * 2024-10-27
     * skipped using usershares, now just creating normal shares and reloading the config file
 * 2024-10-16
@@ -45,8 +47,8 @@ _all of those variants are automatically build and generated in one go_
 
 ### Samba
 
-*  __SAMBA\_USERSHARES\_DIR__
+*  __SAMBA\_DYNAMIC\_SHARES\_DIR__
     * _optional_
     * default not set
-    * location for all usershare files 
+    * location for all dynamic share files 
     * files must be named 'sharename.share', contents are the values of a normal samba share. See the samba documentation

@@ -179,26 +179,22 @@ if [ ! -f "$INITALIZED" ]; then
 </service-group>' >> /etc/avahi/services/samba.service
   fi
 
-################################
-# START USER SHARES
-################################
+  ##################################################
+  # START - DYNAMIC SHARES
+  ##################################################
 
-if [ ! -z ${SAMBA_USERSHARES_DIR} ] && [ -d ${SAMBA_USERSHARES_DIR} ]; then
-	echo ">> USERSHARES: Enabled "
-	# create usershares directory
-	mkdir /var/lib/samba/usershares/
-	# set permissions for usershare directory
-	chmod 1770 /var/lib/samba/usershares
+  if [ ! -z ${SAMBA_DYNAMIC_SHARES_DIR} ] && [ -d ${SAMBA_DYNAMIC_SHARES_DIR} ]; then
+	echo ">> DYNAMIC SHARES: Enabled "
 	# create crontab
-	echo ">> USERSHARES: Create crontab"
-	echo "* * * * * /container/scripts/check-usershares.sh $SAMBA_USERSHARES_DIR" >> /etc/crontabs/root
-else
-	echo ">> USERSHARES: No directory set"
-fi
+	echo ">> DYNAMIC SHARES: Create crontab"
+	echo "* * * * * /container/scripts/check-usershares.sh $SAMBA_DYNAMIC_SHARES_DIR" >> /etc/crontabs/root
+  else
+	echo ">> DYNAMIC SHARES: No directory set, disabled"
+  fi
 
-################################
-# END USER SHARES
-################################
+  ##################################################
+  # END - DYNAMIC
+  ##################################################
 
   ##
   # Samba Volume Config ENVs
@@ -324,15 +320,15 @@ else
   echo ">> CONTAINER: already initialized - direct start of samba"
 fi
 
-################################
-# START - SAVE SECTIONS
-################################
+##################################################
+# START - SAVE SHARES (excludes special sections)
+##################################################
 
-crudini --get --ini-options=ignoreindent /etc/samba/smb.conf > /tmp/sections.tmp
+crudini --get --ini-options=ignoreindent /etc/samba/smb.conf | grep -E -v 'global|homes|printers' > /tmp/sections.tmp
 
-################################
-# END - SAVE SECTIONS
-################################
+##################################################
+# END - SAVE SHARES
+##################################################
 
 
 ##
