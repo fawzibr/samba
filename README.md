@@ -34,8 +34,24 @@ _all of those variants are automatically build and generated in one go_
     - this will only include smbd, my scripts and wsdd2
     - optional service can still be disabled using ENV variables
 
+## Dynamic Volumes
+
+You can add a host directory to the samba container and add shares to it. The volume name is '/dynamic-volumes'.
+After that you can do the following:
+
+* Add directory - just create a directory and it will be automatically added as a share. It will only 
+add path, comment and writeable. If you want extra key/values to the share (like 'guest ok') just create 
+a file names '<sharename>.template' with the keys, if not found it will use 'default.template'.
+
+* Add a share file - create a file named '<sharename>.share' with the samba share information.
+
+* Refresh shares - to refresh shares with webhook just make a request to http://yourserver:9000/hooks/refresh-config
+If environment variable SAMBA\_DYNAMIC\_VOLUMES is set it will check the folder every minute.
+
 ## Changelogs
 
+* 2024-11-26
+    * changed a lot of stuff internally, added webhook to refresh config
 * 2024-10-28
     * changed variable name so it's not mistaken as creating user shares, just a regular share
 * 2024-10-27
@@ -47,8 +63,8 @@ _all of those variants are automatically build and generated in one go_
 
 ### Samba
 
-*  __SAMBA\_DYNAMIC\_SHARES\_DIR__
+*  __SAMBA\_DYNAMIC\_VOLUMES
     * _optional_
-    * default not set
-    * location for all dynamic share files 
+    * value: yes|true|y (default not set)
+    * flag to enable periodic check for user shares 
     * files must be named 'sharename.share', contents are the values of a normal samba share. See the samba documentation

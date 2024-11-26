@@ -22,20 +22,26 @@ RUN apk add --no-cache runit \
  && touch /external/avahi/not-mounted \
  && echo done
 
-# install crudini
+# create dynamic/persistent directories
 
-RUN apk update
-RUN apk upgrade
-RUN apk add python3
-RUN apk add py3-pip
+RUN mkdir -p /dynamic-volumes
+
+# install crudini/webhook/jq/jo
+
+RUN apk add --no-cache python3 py3-pip webhook jq moreutils
 RUN pip3 install --break-system-packages iniparse
-RUN pip3 install --break-system-packages crudini
-
+#RUN pip3 install --break-system-packages crudini
+# remove after crudini package updated
+RUN apk add --no-cache git
+RUN pip3 install --break-system-packages git+https://github.com/pixelb/crudini.git#egg=crudini
 #
 
-VOLUME ["/shares"]
+# udp port 137: Netbios Name Service
+# udp port 138: Netbios Datagram Service
+# tcp port 139: SMB for Windows NT or older
+# tcp port 445: SMB for Windows 2000 or newer
 
-EXPOSE 137/udp 139 445
+EXPOSE 137/udp 138/udp 139 445
 
 COPY . /container/
 

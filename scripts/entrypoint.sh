@@ -179,23 +179,6 @@ if [ ! -f "$INITALIZED" ]; then
 </service-group>' >> /etc/avahi/services/samba.service
   fi
 
-  ##################################################
-  # START - DYNAMIC SHARES
-  ##################################################
-
-  if [ ! -z ${SAMBA_DYNAMIC_SHARES_DIR} ] && [ -d ${SAMBA_DYNAMIC_SHARES_DIR} ]; then
-	echo ">> DYNAMIC SHARES: Enabled "
-	# create crontab
-	echo ">> DYNAMIC SHARES: Create crontab"
-	echo "* * * * * /container/scripts/check-usershares.sh $SAMBA_DYNAMIC_SHARES_DIR" >> /etc/crontabs/root
-  else
-	echo ">> DYNAMIC SHARES: No directory set, disabled"
-  fi
-
-  ##################################################
-  # END - DYNAMIC
-  ##################################################
-
   ##
   # Samba Volume Config ENVs
   ##
@@ -321,15 +304,19 @@ else
 fi
 
 ##################################################
-# START - SAVE SHARES (excludes special sections)
+# START - DYNAMIC/PERSISTENT VOLUMES
 ##################################################
 
-crudini --get --ini-options=ignoreindent /etc/samba/smb.conf | grep -E -v 'global|homes|printers' > /tmp/sections.tmp
+if echo "$SAMBA_DYNAMIC_VOLUMES" | grep -i -E "^(yes|y|true)$" > /dev/null; then
+  echo ">> VOLUMES: Dynamic shares enabled"
+  echo "* * * * * /container/scripts/refresh-config.sh" >> /etc/crontabs/root
+else
+  echo ">> VOLUMES: Dynamic shares disabled"
+fi
 
 ##################################################
-# END - SAVE SHARES
+# END - DYNAMIC/PERSISTENT VOLUMES
 ##################################################
-
 
 ##
 # CMD
