@@ -46,7 +46,7 @@ a file names '<sharename>.template' with the keys, if not found it will use 'def
 * Add a share file - create a file named '<sharename>.share' with the samba share information.
 
 * Refresh shares - to refresh shares with webhook just make a request to http://yourserver:9000/hooks/refresh-config
-If environment variable SAMBA\_DYNAMIC\_VOLUMES is set it will check the folder every minute.
+If environment variable _SAMBA\_DYNAMIC\_VOLUMES_ is set it will check the folder every minute.
 
 ## Changelogs
 
@@ -63,7 +63,7 @@ If environment variable SAMBA\_DYNAMIC\_VOLUMES is set it will check the folder 
 
 ### Samba
 
-*  __SAMBA\_DYNAMIC\_VOLUMES
+*  _SAMBA\_DYNAMIC\_VOLUMES_
     * _optional_
     * value: yes|true|y (default not set)
     * flag to enable periodic check for user shares 
