@@ -156,7 +156,7 @@ volume_register(){
 		return 1
 	fi
 	# add to volume registry
-	echo ">> VOLUMES: Add $S_TYPE share [$S_NAME] to Registry"
+	echo ">> VOLUMES: Add to registry $S_NAME ($S_TYPE)"
 	ini_set_key "$VOLUME_FILE" "$S_NAME" "path" "$S_PATH"
 	ini_set_key "$VOLUME_FILE" "$S_NAME" "type" "$S_TYPE"
 	ini_set_key "$VOLUME_FILE" "$S_NAME" "template" "$S_TEMPLATE"
@@ -166,10 +166,10 @@ volume_register(){
 	ini_set_key "$VOLUME_FILE" "$S_NAME" "checksum" $([ -f "$S_TEMPLATE" ] && md5sum "$S_TEMPLATE" | cut -f 1 -d " ")
 	# add to smb.conf
 	if [ "$S_TYPE" = "file" ]; then
-		echo ">> VOLUMES: Add $S_TYPE share [$S_NAME] to Samba"
+		echo ">> VOLUMES: Add to samba $S_NAME ($S_TYPE)"
 		ini_copy_section "$S_TEMPLATE" "" "$S_CONFIG" "$S_NAME"
 	elif [ "$S_TYPE" = "directory" ]; then
-		echo ">> VOLUMES: Add $S_TYPE share [$S_NAME] to Samba"
+		echo ">> VOLUMES: Add to samba $S_NAME ($S_TYPE)"
 		ini_set_key "$S_CONFIG" "$S_NAME" "path" "$S_PATH"
 		ini_set_key "$S_CONFIG" "$S_NAME" "comment" "Share for $S_PATH in %L"
 		ini_set_key "$S_CONFIG" "$S_NAME" "writeable" "$S_WRITABLE"
@@ -203,12 +203,14 @@ volume_unregister(){
 		# directory share, and directory exists, leave
 		return 1
 	else
-		# delete from volume registry
-		echo ">> VOLUMES: Remove $S_TYPE share [$S_NAME] from Registry"
-	 	ini_del_section "$VOLUME_FILE" "$S_NAME"
+		echo ">> VOLUMES: Disconnect users from $S_NAME ($S_TYPE)"
+		smbcontrol close-share "$S_NAME"
 		# delete from smb.conf
-		echo ">> VOLUMES: Remove $S_TYPE share [$S_NAME] from Samba"
+		echo ">> VOLUMES: Remove from samba $S_NAME ($S_TYPE)"
 	 	ini_del_section "$S_CONFIG" "$S_NAME"
+		# delete from volume registry
+		echo ">> VOLUMES: Remove from registry $S_NAME ($S_TYPE)"
+	 	ini_del_section "$VOLUME_FILE" "$S_NAME"
 		return 0
 	fi
 }
