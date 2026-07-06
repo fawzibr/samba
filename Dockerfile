@@ -1,8 +1,9 @@
 FROM alpine AS wsdd2-builder
 
 # upstream Netgear/wsdd2 repo was deleted - use the Debian snapshot orig tarball (immutable archive)
-RUN apk add --no-cache make gcc libc-dev linux-headers && wget -O - https://snapshot.debian.org/file/28506e4e22bf56ca81edfd348a5fb45d0df02ebf | tar -xJf - \
- && cd wsdd2-1.8.7 && sed -i 's/-O0/-O0 -Wno-int-conversion/g' Makefile && make
+# NOTE: keep 'wsdd2' in every line of this stage - generate-variants.sh strips it via 'grep -v wsdd2'
+RUN apk add --no-cache make gcc libc-dev linux-headers && wget -O wsdd2.tar.xz https://snapshot.debian.org/file/28506e4e22bf56ca81edfd348a5fb45d0df02ebf \
+ && tar -xJf wsdd2.tar.xz && cd wsdd2-1.8.7 && sed -i 's/-O0/-O0 -Wno-int-conversion/g' Makefile && make
 
 FROM alpine
 # alpine:3.14
