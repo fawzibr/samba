@@ -1,12 +1,13 @@
 FROM alpine AS wsdd2-builder
 
-RUN apk add --no-cache make gcc libc-dev linux-headers && wget -O - https://github.com/Netgear/wsdd2/archive/refs/heads/master.tar.gz | tar zxvf - \
- && cd wsdd2-master && sed -i 's/-O0/-O0 -Wno-int-conversion/g' Makefile && make
+# upstream Netgear/wsdd2 repo was deleted - use the Debian snapshot orig tarball (immutable archive)
+RUN apk add --no-cache make gcc libc-dev linux-headers && wget -O - https://snapshot.debian.org/file/28506e4e22bf56ca81edfd348a5fb45d0df02ebf | tar -xJf - \
+ && cd wsdd2-1.8.7 && sed -i 's/-O0/-O0 -Wno-int-conversion/g' Makefile && make
 
 FROM alpine
 # alpine:3.14
 
-COPY --from=wsdd2-builder /wsdd2-master/wsdd2 /usr/sbin
+COPY --from=wsdd2-builder /wsdd2-1.8.7/wsdd2 /usr/sbin
 
 ENV PATH="/container/scripts:${PATH}"
 
