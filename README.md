@@ -50,6 +50,13 @@ _all of those variants are automatically build and generated in one go_
 
 ## Changelogs
 
+* 2026-07-11
+    * added a functional `smbd` test and gated the build on it - images only publish if the test passes
+    * `build.sh` now honors an optional `BUILDX_MULTI` env to pick a specific buildx builder
+* 2026-07-06
+    * fixed `wsdd2` build - Netgear repo got deleted, pulling from debian snapshot now
+    * keep `wsdd2` in each build-stage line so the variant grep strips it cleanly
+    * updated github actions and fixed builds
 * 2026-01-05
     * fixed userId handling for similiar starting userids (e.g. `john johnd joh`) and also fixed #171
 * 2025-11-21
