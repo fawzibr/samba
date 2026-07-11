@@ -26,9 +26,9 @@ if echo "$@" | grep -v "force" 2>/dev/null >/dev/null; then
   fi
 fi
 
-docker buildx build -q --pull --no-cache --platform "$PLATFORM" -t "$IMG:$TAG" --push .
+docker buildx build -q --pull --no-cache --platform "$PLATFORM" -t "$IMG:$TAG" --push ${BUILDX_MULTI:+--builder "$BUILDX_MULTI"} .
 
-echo "$@" | grep "release" 2>/dev/null >/dev/null && echo ">> releasing new latest" && docker buildx build -q --pull --platform "$PLATFORM" -t "$IMG:latest" --push .
+echo "$@" | grep "release" 2>/dev/null >/dev/null && echo ">> releasing new latest" && docker buildx build -q --pull --platform "$PLATFORM" -t "$IMG:latest" --push ${BUILDX_MULTI:+--builder "$BUILDX_MULTI"} .
 
 # make sure to exit if this is only version check
 echo "$@" | grep "version-check" && exit 0 
