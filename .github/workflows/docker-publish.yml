@@ -25,7 +25,19 @@ env:
   IMAGE_PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 
 jobs:
+  # functional gate: nothing (main image or variants) is built/published
+  # unless the smbd smoke test passes.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Run test suite
+        run: ./test.sh
+
   build:
+    needs: test
 
     runs-on: ubuntu-latest
     permissions:
