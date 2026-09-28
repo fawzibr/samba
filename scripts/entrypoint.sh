@@ -324,19 +324,35 @@ fi
 # START - DYNAMIC VOLUMES
 ##################################################
 
+
+case "$SAMBA_DYNAMIC_INTERVAL" in
+    "")
+	# interval not set, check every minute
+	SAMBA_DYNAMIC_INTERVAL=1
+        ;;
+    *[!0-9]*)
+	# interval not a positive number, check every minute
+	SAMBA_DYNAMIC_INTERVAL=1
+        ;;
+esac
+
 LABEL="minutes"
-if [ -z "$SAMBA_DYNAMIC_INTERVAL" ] || [ "$SAMBA_DYNAMIC_INTERVAL" -lt 2 ]; then
-  # interval not set or less than 2, check every minute
-  SAMBA_DYNAMIC_INTERVAL=1
+if [ "$SAMBA_DYNAMIC_INTERVAL" -lt 2 ]; then
   LABEL="minute"
 fi
 
-if echo "$SAMBA_DYNAMIC_VOLUMES" | grep -i -E "^(yes|y|true)$" > /dev/null; then
-  echo ">> DYNAMIC-VOLUMES: Enabled, checking every $SAMBA_DYNAMIC_INTERVAL $LABEL"
+if echo "$SAMBA_DYNAMIC_VOLUMES" | grep -i -E "^(enabled|yes|y|true)$" > /dev/null; then
+  echo ">> DYNAMIC-VOLUMES: Enabled"
   # register static shares defined in docker compose file
   /container/scripts/register-static.sh
-  # set cron job to monitor /dynamic-volumes directory for shares
-  echo "*/$SAMBA_DYNAMIC_INTERVAL * * * * /container/scripts/register-dynamic.sh" >> /etc/crontabs/root
+  # check interval value
+  if [ "$SAMBA_DYNAMIC_INTERVAL" -eq 0 ]; then
+    echo ">> DYNAMIC-VOLUMES: Monitoring disabled, use webhook to reload config"
+  else
+    echo ">> DYNAMIC-VOLUMES: Monitoring enabled, checking every $SAMBA_DYNAMIC_INTERVAL $LABEL"
+    # set cron job to monitor /dynamic-volumes directory for shares
+    echo "*/$SAMBA_DYNAMIC_INTERVAL * * * * /container/scripts/register-dynamic.sh" >> /etc/crontabs/root
+  fi
 else
   echo ">> DYNAMIC-VOLUMES: Disabled"
 fi
