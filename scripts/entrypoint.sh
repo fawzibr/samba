@@ -149,7 +149,7 @@ if [ ! -f "$INITALIZED" ]; then
       echo -e "$ACCOUNT_PASSWORD\n$ACCOUNT_PASSWORD" | passwd "$ACCOUNT_NAME"
       echo -e "$ACCOUNT_PASSWORD\n$ACCOUNT_PASSWORD" | smbpasswd "$ACCOUNT_NAME"
     fi
-    
+
     smbpasswd -e "$ACCOUNT_NAME"
   done
 
@@ -300,7 +300,7 @@ if [ ! -f "$INITALIZED" ]; then
     echo ">> EXTERNAL AVAHI: list of services"
     ls -l /external/avahi/*.service
   fi
-  
+
   echo ""
   echo ">> SAMBA: check smb.conf file using 'testparm -s'"
   echo "############################### START ####################################"
@@ -319,6 +319,31 @@ if [ ! -f "$INITALIZED" ]; then
 else
   echo ">> CONTAINER: already initialized - direct start of samba"
 fi
+
+##################################################
+# START - DYNAMIC VOLUMES
+##################################################
+
+LABEL="minutes"
+if [ -z "$SAMBA_DYNAMIC_INTERVAL" ] || [ "$SAMBA_DYNAMIC_INTERVAL" -lt 2 ]; then
+  # interval not set or less than 2, check every minute
+  SAMBA_DYNAMIC_INTERVAL=1
+  LABEL="minute"
+fi
+
+if echo "$SAMBA_DYNAMIC_VOLUMES" | grep -i -E "^(yes|y|true)$" > /dev/null; then
+  echo ">> DYNAMIC-VOLUMES: Enabled, checking every $SAMBA_DYNAMIC_INTERVAL $LABEL"
+  # register static shares defined in docker compose file
+  /container/scripts/register-static.sh
+  # set cron job to monitor /dynamic-volumes directory for shares
+  echo "*/$SAMBA_DYNAMIC_INTERVAL * * * * /container/scripts/register-dynamic.sh" >> /etc/crontabs/root
+else
+  echo ">> DYNAMIC-VOLUMES: Disabled"
+fi
+
+##################################################
+# END - DYNAMIC VOLUMES
+##################################################
 
 ##
 # CMD

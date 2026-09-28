@@ -1,0 +1,111 @@
+#!/bin/sh
+
+############################
+# FILENAME FUNCTIONS
+############################
+
+CRUDINI_OPTIONS="--ini-options=ignoreindent"
+
+filename(){
+        local FILENAME=$(basename "$1")
+        echo "${FILENAME%.*}"
+}
+
+extname(){
+        local FILENAME=$(basename "$1")
+        local EXTNAME="${FILENAME##*.}"
+        #
+        if [ "$FILENAME" = "$EXTNAME" ]; then
+                echo ""
+        else
+                echo "$EXTNAME"
+        fi
+}
+
+############################
+# INI FUNCTIONS
+############################
+
+ini_list_sections(){
+	local SOURCE="$1"
+	crudini --get $CRUDINI_OPTIONS "$SOURCE"
+}
+
+ini_has_section(){
+	local SOURCE="$1"
+	local SECTION="$2"
+
+	if crudini --get $CRUDINI_OPTIONS "$SOURCE" | grep "$SECTION" > /dev/null; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+ini_print_section(){
+	local SOURCE="$1"
+	local SECTION="$2"
+
+	crudini --get $CRUDINI_OPTIONS --format=ini "$SOURCE" "$SECTION" | tail -n +2
+}
+
+ini_del_section(){
+	local SOURCE="$1"
+	local SECTION="$2"
+	crudini --del $CRUDINI_OPTIONS "$SOURCE" "$SECTION"
+}
+
+ini_list_keys(){
+	local SOURCE="$1"
+	local SECTION="$2"
+	crudini --get $CRUDINI_OPTIONS "$SOURCE" "$SECTION"
+}
+
+ini_get_key(){
+	local SOURCE="$1"
+	local SECTION="$2"
+	local KEY="$3"
+	local DEF="$4"
+	#
+	if ! crudini --get $CRUDINI_OPTIONS "$SOURCE" "$SECTION" "$KEY" 2> /dev/null;	then
+		echo "$DEF"
+	fi
+}
+
+ini_set_key(){
+	local SOURCE="$1"
+	local SECTION="$2"
+	local KEY="$3"
+	local VALUE="$4"
+	#
+	crudini --set $CRUDINI_OPTIONS "$SOURCE" "$SECTION" "$KEY" "$VALUE"
+}
+
+ini_del_key(){
+	local SOURCE="$1"
+	local SECTION="$2"
+	local KEY="$3"
+	local VALUE="$4"
+	#
+	crudini --del $CRUDINI_OPTIONS "$SOURCE" "$SECTION" "$KEY"
+}
+
+ini_copy_section(){
+	local FROM_FILE="$1"
+	local FROM_SECTION="$2"
+	local TO_FILE="$3"
+	local TO_SECTION="$4"
+	local EXCLUDE="$5"
+	#
+	if [ -f "$FROM_FILE" ] && [ -z "$EXCLUDE" ]; then
+		ini_list_keys "$FROM_FILE" "$FROM_SECTION" | while IFS= read -r KEY ; do
+			VALUE=$(ini_get_key "$FROM_FILE" "$FROM_SECTION" "$KEY")
+			ini_set_key "$TO_FILE" "$TO_SECTION" "$KEY" "$VALUE"
+		done
+	elif [ -f "$FROM_FILE" ]; then
+		ini_list_keys "$FROM_FILE" "$FROM_SECTION" | grep -v -E "$EXCLUDE" | while IFS= read -r KEY ; do
+			VALUE=$(ini_get_key "$FROM_FILE" "$FROM_SECTION" "$KEY")
+			ini_set_key "$TO_FILE" "$TO_SECTION" "$KEY" "$VALUE"
+		done
+	fi
+}
