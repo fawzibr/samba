@@ -26,16 +26,41 @@ extname(){
 # INI FUNCTIONS
 ############################
 
+ini_valid(){
+	local SOURCE="$1"
+	local SECTIONS=""
+	local RESULT=""
+	# save sections to file
+	if ! crudini --get $CRUDINI_OPTIONS "$SOURCE" > /tmp/sections.txt 2> /dev/null; then
+		RESULT="error"
+	else
+		# check sections
+		while IFS= read -r CURR ; do
+			if [ -n "$RESULT" ]; then
+				: # HAS ERROR
+			elif ! crudini --get $CRUDINI_OPTIONS "$SOURCE" "$CURR" > /dev/null 2>&1; then
+				RESULT="error"
+			fi
+		done < /tmp/sections.txt
+	fi
+	#
+	if [ -n "$RESULT" ]; then
+		return 1
+	else
+		return 0
+	fi
+}
+
 ini_list_sections(){
 	local SOURCE="$1"
-	crudini --get $CRUDINI_OPTIONS "$SOURCE"
+	crudini --get $CRUDINI_OPTIONS "$SOURCE" 2> /dev/null
 }
 
 ini_has_section(){
 	local SOURCE="$1"
 	local SECTION="$2"
-
-	if crudini --get $CRUDINI_OPTIONS "$SOURCE" | grep "$SECTION" > /dev/null; then
+	#
+	if crudini --get $CRUDINI_OPTIONS "$SOURCE" | grep "$SECTION" > /dev/null 2>&1; then
 		return 0
 	else
 		return 1

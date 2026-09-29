@@ -324,6 +324,9 @@ fi
 # START - DYNAMIC VOLUMES
 ##################################################
 
+if [ -z "$SAMBA_DYNAMIC_WEBHOOK_PORT" ]; then
+  SAMBA_DYNAMIC_WEBHOOK_PORT=9000
+fi
 
 case "$SAMBA_DYNAMIC_INTERVAL" in
     "")

@@ -1,8 +1,5 @@
 #!/bin/sh -x
-sleep 14
 
-if [ -z "$SAMBA_DYNAMIC_WEBHOOK_PORT" ]; then
-  SAMBA_DYNAMIC_WEBHOOK_PORT=9000
-fi
+sleep 14
 
 exec webhook -hooks /container/config/webhook/hooks.json -port $SAMBA_DYNAMIC_WEBHOOK_PORT
