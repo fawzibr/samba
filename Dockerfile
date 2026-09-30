@@ -28,6 +28,7 @@ RUN apk add --no-cache runit \
 # DYNAMIC VOLUMES STUFF
 ###########################
 RUN mkdir -p /dynamic-volumes
+#RUN apk add --no-cache webhook moreutils yq
 RUN apk add --no-cache webhook moreutils py3-pip
 RUN pip install crudini --break-system-packages
 ###########################

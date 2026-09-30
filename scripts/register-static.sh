@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. "/container/scripts/ini-functions.include"
+. "/container/scripts/ini-functions-crudini.include"
 
 ############################
 # MAIN
@@ -9,13 +9,11 @@
 # variables
 
 VOLUME_REGISTRY="/tmp/volumes.ini"
-DYNAMIC_REGISTRY="/tmp/dynamic-shares.txt"
 SAMBA_CONFIG="/etc/samba/smb.conf"
 
 # create files
 
 touch "$VOLUME_REGISTRY"
-touch "$DYNAMIC_REGISTRY"
 
 # register static volumes, only runs on start
 
