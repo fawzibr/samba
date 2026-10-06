@@ -15,9 +15,11 @@ SAMBA_CONFIG="/etc/samba/smb.conf"
 
 echo "[global]" > "$VOLUME_REGISTRY"
 
-# register static volumes, only runs on start
+# register static volumes, get from environment values
 
-ini_list_sections "$SAMBA_CONFIG" | while IFS= read -r S_NAME; do
+for VAR_NAME in $(env | grep '^SAMBA_VOLUME_CONFIG_' | cut -d= -f1); do
+        eval "VAR_VALUE=\${$VAR_NAME}"
+	S_NAME=$(echo "$VAR_VALUE" | sed 's/^[[:space:]]*\[\(.*\)\].*/\1/')
 	# check if valid name
 	if echo "$S_NAME" | grep -E "global|home|printers" > /dev/null; then
 		# reserved section name
