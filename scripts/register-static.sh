@@ -11,9 +11,9 @@
 VOLUME_REGISTRY="/tmp/volumes.ini"
 SAMBA_CONFIG="/etc/samba/smb.conf"
 
-# create volume registry
+# create empty volume registry
 
-touch "$VOLUME_REGISTRY"
+echo "[global]" > "$VOLUME_REGISTRY"
 
 # register static volumes, only runs on start
 

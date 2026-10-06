@@ -163,7 +163,7 @@ SAMBA_CONFIG="/etc/samba/smb.conf"
 
 # clear volumes state
 
-ini_del_section "$VOLUME_REGISTRY" "global"
+ini_clear_section "$VOLUME_REGISTRY" "global"
 
 # register dynamic volumes
 

@@ -80,10 +80,25 @@ ini_del_section(){
 	crudini --del $CRUDINI_OPTIONS "$SOURCE" "$SECTION"
 }
 
+ini_clear_section(){
+	local SOURCE="$1"
+	local SECTION="$2"
+	# check if section exists
+	if ! crudini --get $CRUDINI_OPTIONS "$SOURCE" | grep "$SECTION" > /dev/null 2>&1; then
+		return 1
+	fi
+	# delete all keys
+	ini_list_keys "$SOURCE" "$SECTION" | while IFS= read -r KEY ; do
+		ini_del_key "$SOURCE" "$SECTION" "$KEY"
+	done
+}
+
 ini_list_keys(){
 	local SOURCE="$1"
 	local SECTION="$2"
-	crudini --get $CRUDINI_OPTIONS "$SOURCE" "$SECTION"
+	if crudini --get $CRUDINI_OPTIONS "$SOURCE" | grep "$SECTION" > /dev/null 2>&1; then
+		crudini --get $CRUDINI_OPTIONS "$SOURCE" "$SECTION"
+	fi
 }
 
 ini_get_key(){
