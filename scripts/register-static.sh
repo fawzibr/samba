@@ -11,7 +11,7 @@
 VOLUME_REGISTRY="/tmp/volumes.ini"
 SAMBA_CONFIG="/etc/samba/smb.conf"
 
-# create files
+# create volume registry
 
 touch "$VOLUME_REGISTRY"
 

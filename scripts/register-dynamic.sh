@@ -2,6 +2,34 @@
 
 . "/container/scripts/ini-functions-crudini.include"
 
+register_action(){
+	local SECTION="$1"
+	local ACTION="$2"
+	ini_set_key "$VOLUME_REGISTRY" "global" "$SECTION" "$ACTION"
+	#
+	if [ "$ACTION" = "add" ] || [ "$ACTION" = "del" ]; then
+		ini_set_key "$VOLUME_REGISTRY" "global" "changed" "true"
+	fi
+}
+
+register_isaction(){
+	local SECTION="$1"
+	local ACTION="$2"
+	if ini_is_key "$VOLUME_REGISTRY" "global" "$SECTION" "$ACTION"; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+register_ischanged(){
+	if ini_is_key "$VOLUME_REGISTRY" "global" "changed" "true"; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 register_directory(){
 	local S_SOURCE="$1"
         local S_DIR=$(dirname "$S_SOURCE")
@@ -20,7 +48,7 @@ register_directory(){
 		return 1
 	elif ini_is_key "$VOLUME_REGISTRY" "$S_NAME" "checksum" "$CURR_CSUM"; then
 		# registered and same checksum, nothing changed
-		ini_set_key "$VOLUME_STATE" "volumes" "$S_NAME" "added"
+		register_action "$S_NAME" "none"
 		return 0
 	fi
 	# get directory information
@@ -34,6 +62,8 @@ register_directory(){
 	elif [ "$S_USR" = "$SAMBA_DYNAMIC_USER" ]; then
 		S_WRITABLE="yes"
 	fi
+	# remove existing
+	ini_del_section "$SAMBA_CONFIG" "$S_NAME"
 	# add to registry
 	ini_set_key "$VOLUME_REGISTRY" "$S_NAME" "type" "dynamic"
 	ini_set_key "$VOLUME_REGISTRY" "$S_NAME" "checksum" "$CURR_CSUM"
@@ -41,7 +71,7 @@ register_directory(){
 	ini_set_key "$SAMBA_CONFIG" "$S_NAME" "path" "$S_SOURCE"
 	ini_set_key "$SAMBA_CONFIG" "$S_NAME" "comment" "Share for $S_SOURCE in %L"
 	ini_set_key "$SAMBA_CONFIG" "$S_NAME" "writeable" "$S_WRITABLE"
-	# if templare exists add its keys
+	# if template exists add its keys
        	echo ">> DYNAMIC-VOLUMES: Register directory [$S_NAME]"
 	if [ ! -f "$S_TEMPLATE" ]; then
 		: # no template found
@@ -57,8 +87,7 @@ register_directory(){
 		fi
 	fi
 	# registered, update state
-	ini_set_key "$VOLUME_STATE" "flags" "changed" "true"
-	ini_set_key "$VOLUME_STATE" "volumes" "$S_NAME" "added"
+	register_action "$S_NAME" "add"
 	# print section
 	ini_print_section "$SAMBA_CONFIG" "$S_NAME" | while IFS= read -r LINE; do
 		echo "    $LINE"
@@ -66,7 +95,6 @@ register_directory(){
 	#
 	return 0
 }
-
 
 register_file(){
 	local S_SOURCE="$1"
@@ -99,20 +127,21 @@ register_file(){
 	        	echo "    ERROR: [$S_SECTION] already registered as static"
 		elif ini_is_key "$VOLUME_REGISTRY" "$S_SECTION" "checksum" "$CURR_CSUM"; then
 			# checksum same, no change, add to registered directories
-			ini_set_key "$VOLUME_STATE" "volumes" "$S_SECTION" "added"
+			register_action "$S_SECTION" "none"
 		elif echo "$S_FS" | grep -E "^\/$|^overlay$|^shm$" > /dev/null; then
 	        	echo ">> DYNAMIC-VOLUMES: Register directory [$S_SECTION] from $(basename $S_SOURCE)"
 	        	echo "    ERROR: [$S_SECTION] points to an internal container path"
 		else
 	        	echo ">> DYNAMIC-VOLUMES: Register directory [$S_SECTION] from $(basename $S_SOURCE)"
+			# remove existing
+			ini_del_section "$SAMBA_CONFIG" "$S_SECTION"
 			# add to registry
 	                ini_set_key "$VOLUME_REGISTRY" "$S_SECTION" "type" "dynamic"
 	                ini_set_key "$VOLUME_REGISTRY" "$S_SECTION" "checksum" "$CURR_CSUM"
 			# add to samba
 			ini_copy_section "$S_SOURCE" "$S_SECTION" "$SAMBA_CONFIG" "$S_SECTION" ""
 			# registered, update state
-			ini_set_key "$VOLUME_STATE" "flags" "changed" "true"
-			ini_set_key "$VOLUME_STATE" "volumes" "$S_SECTION" "added"
+			register_action "$S_SECTION" "add"
 			# print section
 			ini_print_section "$SAMBA_CONFIG" "$S_SECTION" | while IFS= read -r LINE; do
 				echo "    $LINE"
@@ -130,22 +159,11 @@ register_file(){
 
 VOLUME_DIR="/dynamic-volumes"
 VOLUME_REGISTRY="/tmp/volumes.ini"
-VOLUME_STATE="/tmp/state.ini"
 SAMBA_CONFIG="/etc/samba/smb.conf"
 
 # clear volumes state
 
-touch "$VOLUME_STATE"
-ini_del_key "$VOLUME_STATE" "flags" "changed"
-ini_del_section "$VOLUME_STATE" "volumes"
-
-# get current volumes
-
-ini_list_sections "$VOLUME_REGISTRY" | while IFS= read -r S_SECTION; do
-	if ! ini_is_key "$VOLUME_REGISTRY" "$S_SECTION" "type" "static"; then
-		ini_set_key "$VOLUME_STATE" "volumes" "$S_SECTION"
-	fi
-done
+ini_del_section "$VOLUME_REGISTRY" "global"
 
 # register dynamic volumes
 
@@ -153,30 +171,37 @@ for S_NAME in $(find "$VOLUME_DIR" -mindepth 1 -maxdepth 1 -type f -name "*.shar
 	if [ -d "$S_NAME" ]; then
 		register_directory "$S_NAME"
 	else
-		register_file "$S_NAME"
+	  	register_file "$S_NAME"
 	fi
 done
 
-# remove disabled volumes
+# check removed
 
-ini_list_keys "$VOLUME_STATE" "volumes" | while IFS= read -r S_SECTION; do
-	if ini_is_key "$VOLUME_STATE" "volumes" "$S_SECTION" "added"; then
-		# skip added ones
+ini_list_sections "$SAMBA_CONFIG" | while IFS= read -r S_NAME; do
+        # check if valid name
+        if echo "$S_NAME" | grep -E "global|home|printers" > /dev/null; then
+                # reserved section name
 		continue
-	else
-		echo ">> DYNAMIC-VOLUMES: Unregister directory $S_SECTION"
-		# remove from samba
-		ini_del_section "$SAMBA_CONFIG" "$S_SECTION"
-		# remove from registry
-		ini_del_section "$VOLUME_REGISTRY" "$S_SECTION"
-		# set changed flag
-		ini_set_key "$VOLUME_STATE" "flags" "changed" "true"
-	fi
+	elif ini_is_key "$VOLUME_REGISTRY" "$S_NAME" "type" "static"; then
+                # volume is static
+                continue
+	elif register_isaction "$S_NAME" "add"; then
+                # volume added
+                continue
+	elif register_isaction "$S_NAME" "none"; then
+                # volume not changed
+                continue
+        else
+		echo ">> DYNAMIC-VOLUMES: Unregister directory $S_NAME"
+		ini_del_section "$VOLUME_REGISTRY" "$S_NAME"
+		ini_del_section "$SAMBA_CONFIG" "$S_NAME"
+		register_action "$S_NAME" "del"
+        fi
 done
 
 # reload samba if needed
 
-if ! ini_is_key "$VOLUME_STATE" "flags" "changed" "true"; then
+if ! register_ischanged; then
         : # do nothing, smb.conf not changed
 elif ! which smbcontrol > /dev/null; then
         echo ">> DYNAMIC-VOLUMES: Samba configuration changed, smbcontrol missing!!"
